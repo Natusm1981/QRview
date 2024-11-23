@@ -6,7 +6,7 @@ class PropagandaController {
       height: 50,
       width: double.infinity,
       color: Colors.amber,
-      child: const Center(child: Text("Aqui vai ter a propagandinha!")),
+      child: const Center(child: Text('PROPAGANDA')),
     );
   }
 }
