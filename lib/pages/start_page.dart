@@ -1,13 +1,15 @@
+import 'dart:math';
 import 'dart:typed_data';
+import 'package:image/image.dart' as img;
 import 'package:ai_barcode_scanner/ai_barcode_scanner.dart';
+import 'package:qrview/animacoes/caixaAnimada.dart';
 import 'package:qrview/controllers/propaganda_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:qrview/pages/mostrar_qr_page.dart';
-// import 'package:mobile_scanner/mobile_scanner.dart';
 
-// late CameraController controller;
-Uint8List? imagem;
+Uint8List?
+    imagem; //<<<<<<falta agora implementar um shared preferences com os 3 últimos qr lidos e mostrar na página de resultados
 
 class StartPage extends StatefulWidget {
   final List<CameraDescription> cameras;
@@ -47,6 +49,20 @@ class _StartPageState extends State<StartPage> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
+        drawer: Drawer(
+          child: Column(
+            children: [
+              ListTile(
+                leading: Icon(Icons.qr_code),
+                title: Text('Criar QR'),
+                onTap: () {},
+              ),
+              ListTile(
+                  leading: Icon(Icons.list_rounded),
+                  title: Text('Últimas leituras')),
+            ],
+          ),
+        ),
         appBar: AppBar(
           title: const Text('QR READER'),
         ),
@@ -55,26 +71,56 @@ class _StartPageState extends State<StartPage> {
           children: [
             Expanded(
               child: AiBarcodeScanner(
+                customOverlayBuilder: (context, test, mobileScannerController) {
+                  return CaixaAnimada();
+                },
+                actions: [],
+                bottomSheetBuilder: (context, controller) {},
+                sheetTitle: 'Leitura de Qualquer QR',
                 setPortraitOrientation: false,
                 borderColor: Colors.yellow,
                 borderWidth: 2,
-                hideSheetTitle: true,
+                hideSheetTitle: false,
                 hideSheetDragHandler: true,
                 scanWindowUpdateThreshold: 0.5,
                 fit: BoxFit.fill,
                 controller: mobileScannerController,
                 onDetect: (BarcodeCapture barcodeCapture) async {
+                  final limites = barcodeCapture.barcodes.first.corners;
+                  final img.Image? imagemManipulavel =
+                      img.decodeImage(barcodeCapture.image!);
+
+                  final Offset x1 = limites[0];
+                  final Offset x2 = limites[1];
+                  final Offset x3 = limites[2];
+                  final Offset x4 = limites[3];
+
+                  final valor = 3;
+
+                  final inicioX = min(x1.dx, x4.dx).toInt() - valor;
+                  final inicioY = min(x1.dy, x2.dy).toInt() - valor;
+                  final largura = valor * 2 +
+                      max(x2.dx, x3.dx).toInt() -
+                      min(x1.dx, x4.dx).toInt();
+                  final altura = valor * 2 +
+                      max(x4.dy, x3.dy).toInt() -
+                      min(x1.dy, x2.dy).toInt();
+
+                  final img.Image cropped = img.copyCrop(imagemManipulavel!,
+                      x: inicioX, y: inicioY, width: largura, height: altura);
+
+                  final imagemPassar =
+                      Uint8List.fromList(img.encodeJpg(cropped));
                   if (_isNavigating) return;
                   _isNavigating = true;
-                  final Uint8List? image = barcodeCapture.image;
-                  if (mounted && image != null) {
+                  if (mounted) {
                     mobileScannerController.stop();
 
                     await Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (BuildContext context) => MostrarQrPage(
-                          imagem: image,
+                          imagem: imagemPassar,
                           texto:
                               barcodeCapture.barcodes.first.rawValue.toString(),
                           mobileScannerController: mobileScannerController,
@@ -94,107 +140,4 @@ class _StartPageState extends State<StartPage> {
       ),
     );
   }
-
-  // @override
-  // Widget build(BuildContext context) {
-  //   return SafeArea(
-  //     child: Scaffold(
-  //       appBar: AppBar(
-  //         title: const Text('QR READER'),
-  //       ),
-  //       body: Column(
-  //         mainAxisAlignment: MainAxisAlignment.end,
-  //         children: [
-  //           Expanded(
-  //             child: AiBarcodeScanner(
-  //               setPortraitOrientation: false,
-  //               //  galleryButtonAlignment: ,
-  //               borderColor: Colors.yellow,
-  //               borderWidth: 2,
-
-  //               hideSheetTitle: true,
-  //               hideSheetDragHandler: true,
-  //               scanWindowUpdateThreshold: 0.5,
-  //               fit: BoxFit.fill,
-  //               controller: mobileScannerController,
-  //               onDetect: (BarcodeCapture barcodeCapture) {
-  //                 final Uint8List? image = barcodeCapture.image;
-  //                 final texto =
-  //                     barcodeCapture.barcodes.first.rawValue.toString();
-  //                 mobileScannerController.stop();
-  //                 if (mounted && image != null) {
-  //                   Navigator.push(
-  //                     context,
-  //                     MaterialPageRoute(
-  //                       builder: (BuildContext context) => MostrarQrPage(
-  //                         imagem: image,
-  //                         texto: texto,
-  //                       ),
-  //                     ),
-  //                   );
-  //                 }
-
-  //                 debugPrint(barcodeCapture.barcodes.first.rawValue.toString());
-  //               },
-  //             ),
-  //           ),
-  //           PropagandaController().bannerPropaganda(),
-  //         ],
-  //       ),
-  //     ),
-  //   );
 }
-
-  // Container ultimos3QR() {
-  //   return Container(
-  //     height: 100,
-  //     width: double.infinity,
-  //     color: Colors.blue,
-  //     child: Row(
-  //       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-  //       children: [
-  //         Column(
-  //           mainAxisAlignment: MainAxisAlignment.center,
-  //           children: [
-  //             imagem != null
-  //                 ? Container(
-  //                     width: 50,
-  //                     height: 50,
-  //                     color: Colors.amber,
-  //                     child: Image(image: MemoryImage(imagem!)),
-  //                   )
-  //                 : Container(
-  //                     width: 50,
-  //                     height: 50,
-  //                     color: Colors.amber,
-  //                   ),
-  //             const Text('Ultimo')
-  //           ],
-  //         ),
-  //         Column(
-  //           mainAxisAlignment: MainAxisAlignment.center,
-  //           children: [
-  //             Container(
-  //               width: 50,
-  //               height: 50,
-  //               color: Colors.amber,
-  //             ),
-  //             const Text("container 2")
-  //           ],
-  //         ),
-  //         Column(
-  //           mainAxisAlignment: MainAxisAlignment.center,
-  //           children: [
-  //             Container(
-  //               width: 50,
-  //               height: 50,
-  //               color: Colors.amber,
-  //             ),
-  //             const Text("container 3")
-  //           ],
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
-
