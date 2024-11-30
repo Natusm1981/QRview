@@ -6,6 +6,7 @@ import 'package:qrview/animacoes/caixaAnimada.dart';
 import 'package:qrview/controllers/propaganda_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
+import 'package:qrview/pages/criarQr_page.dart';
 import 'package:qrview/pages/mostrar_qr_page.dart';
 
 Uint8List?
@@ -53,11 +54,19 @@ class _StartPageState extends State<StartPage> {
           child: Column(
             children: [
               ListTile(
-                leading: Icon(Icons.qr_code),
-                title: Text('Criar QR'),
-                onTap: () {},
+                leading: const Icon(Icons.qr_code),
+                title: const Text('Criar QR'),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (BuildContext context) {
+                      mobileScannerController.stop;
+                      return CriarqrPage();
+                    }),
+                  );
+                },
               ),
-              ListTile(
+              const ListTile(
                   leading: Icon(Icons.list_rounded),
                   title: Text('Últimas leituras')),
             ],
@@ -74,8 +83,6 @@ class _StartPageState extends State<StartPage> {
                 customOverlayBuilder: (context, test, mobileScannerController) {
                   return CaixaAnimada();
                 },
-                actions: [],
-                bottomSheetBuilder: (context, controller) {},
                 sheetTitle: 'Leitura de Qualquer QR',
                 setPortraitOrientation: false,
                 borderColor: Colors.yellow,
@@ -95,7 +102,7 @@ class _StartPageState extends State<StartPage> {
                   final Offset x3 = limites[2];
                   final Offset x4 = limites[3];
 
-                  final valor = 3;
+                  const valor = 3;
 
                   final inicioX = min(x1.dx, x4.dx).toInt() - valor;
                   final inicioY = min(x1.dy, x2.dy).toInt() - valor;
